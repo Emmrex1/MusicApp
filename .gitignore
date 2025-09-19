@@ -1,0 +1,66 @@
+# =========================
+# Global Ignore (both client + server)
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+*.log.*
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.vscode/
+.idea/
+*.swp
+
+# Coverage / Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.tgz
+*.zip
+
+# =========================
+# Client Side (React / Next.js / Vite)
+# =========================
+clients side/build/
+clients side/dist/
+clients side/.next/
+clients side/out/
+clients side/.cache/
+clients side/.parcel-cache/
+clients side/.eslintcache
+
+# React Native (if ever used)
+clients side/android/
+clients side/ios/
+clients side/expo/
+
+# =========================
+# Server Side (Node.js / Express / TypeScript)
+# =========================
+server side/dist/
+server side/build/
+server side/coverage/
+server side/*.tsbuildinfo
