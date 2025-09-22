@@ -1,66 +1,58 @@
-# =========================
-# Global Ignore (both client + server)
-# =========================
-node_modules/
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Logs
-logs
-*.log
-*.log.*
+# Runtime data
 pids
 *.pid
 *.seed
 *.pid.lock
 
-# OS files
-.DS_Store
-Thumbs.db
+# Dependency directories
+node_modules/
+**/node_modules/
 
-# IDE settings
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+
+# TypeScript cache
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE/editor settings
 .vscode/
 .idea/
 *.swp
+*.swo
+*.DS_Store
+Thumbs.db
 
-# Coverage / Testing
+# Coverage
 coverage/
-.nyc_output/
+*.lcov
 
-# Misc
-*.tgz
-*.zip
+# Temporary files
+tmp/
+temp/
+*.tmp
 
-# =========================
-# Client Side (React / Next.js / Vite)
-# =========================
-clients side/build/
-clients side/dist/
-clients side/.next/
-clients side/out/
-clients side/.cache/
-clients side/.parcel-cache/
-clients side/.eslintcache
+# Optional: ignore database or uploads if generated locally
+uploads/
+*.sqlite
+*.db
 
-# React Native (if ever used)
-clients side/android/
-clients side/ios/
-clients side/expo/
-
-# =========================
-# Server Side (Node.js / Express / TypeScript)
-# =========================
-server side/dist/
-server side/build/
-server side/coverage/
-server side/*.tsbuildinfo
+# Ignore compiled JS in case TS outputs directly into src
+src/**/*.js
+src/**/*.js.map
