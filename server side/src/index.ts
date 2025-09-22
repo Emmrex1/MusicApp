@@ -1,7 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import UserRoutes from './routes.js';
+import UserRoutes from './routes/authroutes.js';
 
 
 dotenv.config();
