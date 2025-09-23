@@ -1,3 +1,4 @@
+
 import type { NextFunction, Request, Response } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
@@ -22,21 +23,21 @@ export const isAuth = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-  
     const authHeader = req.headers["authorization"];
-
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res.status(403).json({ message: "No token provided, please login" });
       return;
     }
 
-    const token = authHeader.split(" ")[1]; 
+    const token = authHeader.split(" ")[1];
 
     const { data } = await axios.get(`${process.env.User_URL}/api/v1/users/me`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    req.user = data;
+
+    req.user = data.user;
+
     next();
   } catch (error) {
     res.status(403).json({ message: "Invalid or expired token, please login" });
@@ -44,9 +45,5 @@ export const isAuth = async (
 };
 
 
-  import multer from "multer";
-  const storage = multer.memoryStorage();
+
   
-  export const uploadFiles = multer({ storage }).single("file");
-  
-  export default uploadFiles;

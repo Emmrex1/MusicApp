@@ -6,9 +6,9 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const registerUsers = TryCatch(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body;
 
-  if (!name || !email || !password) {
+  if (!name || !email || !password || !role) {
     return res.status(400).json({
       success: false,
       message: "Please provide all required fields",
@@ -96,11 +96,11 @@ export const loginUser = TryCatch(async (req, res) => {
   });
 });
 
+
 export const getProfile = TryCatch(async (req: AuthenticatedRequest, res) => {
-  const user = req.user;
   res.status(200).json({
     success: true,
-    user,
+    user: req.user, 
   });
 });
 

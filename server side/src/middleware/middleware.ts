@@ -1,3 +1,4 @@
+
 import type { NextFunction, Request, Response } from "express";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 import type { IUser } from "../models/model.js";
@@ -20,16 +21,13 @@ export const isAuth = async (
     }
 
     const token = authHeader.split(" ")[1];
-
     if (!token) {
       res.status(403).json({ message: "Token missing, please login" });
       return;
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET as string
-    ) as JwtPayload;
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
 
     if (!decoded || !decoded.id) {
       res.status(403).json({ message: "Invalid token, please login" });
