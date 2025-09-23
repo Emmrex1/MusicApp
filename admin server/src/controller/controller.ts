@@ -63,3 +63,143 @@ export const addAlbum = TryCatch(async (req: AuthenticatedRequest, res) => {
     album: result[0],
   });
 });
+
+export const addsong = TryCatch(async (req: AuthenticatedRequest, res) => {
+   if (req.user?.role !== "admin") {
+    return res.status(401).json({
+      success: false,
+      message: "You are not admin",
+    });
+  }
+
+  const { title, description, album } = req.body;
+  if (!title || !description || !album) {
+    return res.status(400).json({
+      success: false,
+      message: "Title, description, and album ID are required",
+    });
+  }
+  const isAlbum = await sql` SELECT * FROM albums WHERE id = ${album}; `;
+
+  if (isAlbum.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "Album not found with the provided ID",
+    });
+  }
+
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({
+      success: false,
+      message: "No file to upload",
+    });
+  }
+
+  // Convert file to DataURI
+  const fileBuffer = getBuffer(file);
+  if (!fileBuffer) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid file format or empty buffer",
+    });
+  }
+    // Upload to Cloudinary
+  const cloud = await cloudinary.v2.uploader.upload(fileBuffer, {
+    folder: "songs",
+    resource_type: "auto", 
+  });
+  const result = await sql`
+    INSERT INTO songs (title, description, audio, album_id)
+    VALUES (${title}, ${description}, ${cloud.secure_url}, ${album})
+    RETURNING *;
+  `;
+   res.status(201).json({
+     message: "Song added successfully" 
+
+   })
+});
+
+export const addthumbnail = TryCatch(async (req: AuthenticatedRequest, res) => {
+   if (req.user?.role !== "admin") {
+    return res.status(401).json({
+      success: false,
+      message: "You are not admin",
+    });
+  }
+  const song = await sql` SELECT * FROM songs WHERE id = ${req.params.id}; `;
+  if (song.length === 0) {
+    return res.status(404).json({
+      success: false,
+      message: "Song not found with the provided ID",
+    });
+  }
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({
+      success: false,
+      message: "No file to upload",
+    });
+  }
+  // Convert file to DataURI
+  const fileBuffer = getBuffer(file);
+  if (!fileBuffer) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid file format or empty buffer",
+    });
+  }
+    // Upload to Cloudinary
+  const cloud = await cloudinary.v2.uploader.upload(fileBuffer, {
+    folder: "songs",
+    resource_type: "image",
+  });
+  const result = await sql`
+    UPDATE songs
+    SET thumbnail = ${cloud.secure_url}
+    WHERE id = ${req.params.id}
+    RETURNING *;
+  `;
+   res.status(200).json({
+     message: "Thumbnail added successfully",
+     song: result[0],
+   });
+});
+
+export const deleteAlbum = TryCatch(async (req: AuthenticatedRequest, res) => {
+   if (req.user?.role !== "admin") {
+    return res.status(401).json({
+      success: false,
+      message: "You are not admin",
+    });
+  }
+  const { id } = req.params;
+  const album = await sql` SELECT * FROM albums WHERE id = ${id}; `;
+  if (album.length === 0) {
+    return res.status(404).json({
+       message: "Album not found with the provided ID" });
+  }
+   await sql` DELETE FROM songs WHERE album_id = ${id}; `;
+    await sql` DELETE FROM albums WHERE id = ${id}; `;
+    res.status(200).json({ 
+      message: "Album and associated songs deleted successfully"
+    });
+ 
+});
+
+export const deletesong = TryCatch(async (req: AuthenticatedRequest, res) => {
+   if (req.user?.role !== "admin") {
+    return res.status(401).json({
+      success: false,
+      message: "You are not admin",
+    });
+  }
+  const { id } = req.params;
+  const song = await sql` SELECT * FROM songs WHERE id = ${id}; `;
+  if (song.length === 0) {
+    return res.status(404).json({
+       message: "Song not found with the provided ID" });
+  }
+    await sql` DELETE FROM songs WHERE id = ${id}; `;
+    res.status(200).json({ message: "Song deleted successfully" });
+});
