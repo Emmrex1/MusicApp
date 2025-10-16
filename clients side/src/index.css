@@ -121,3 +121,37 @@
     font-family: 'Poppins', sans-serif;
   }
 }
+
+.auth-input {
+  @apply w-full p-3 bg-gray-800 rounded-md border border-gray-700 focus:outline-none focus:border-gray-500;
+}
+.auth-btn {
+  @apply w-full bg-green-500  py-3 hover:bg-green-400 text-black font-semibold p-3 rounded-full cursor-pointer ;
+}
+
+.wave-container {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 80px;
+}
+
+.wave {
+  width: 6px;
+  height: 20px;
+  background-color: #1db954;
+  border-radius: 6px;
+  animation: bounce 1s infinite ease-in-out;
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+
+  50% {
+    transform: scaleY(1);
+  }
+}
