@@ -1,9 +1,13 @@
 
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useUserData } from "./context/Usercontext";
 import Home from "./pages/Home/home";
 import LoginForm from "./pages/Auth/Login";
 import RegisterForm from "./pages/Auth/Register";
+import { useUserData } from "./context/Usercontext";
+import Profile from "./pages/Profile/Profile";
+import Album from "./pages/Album/album";
+
+
 
 function App() {
   const { loading } = useUserData();
@@ -35,8 +39,8 @@ function App() {
 
         <Route path="/login" element={<LoginForm />} />
          <Route path="/register" element={<RegisterForm/>} /> 
-        {/* <Route path="/profile" element={<Profile />} /> */}
-        {/* <Route path="/album/:id" element={<AlbumPage />} /> */}
+         <Route path="/profile" element={<Profile />} />
+         <Route path="/album/:id" element={<Album />} />
         {/* <Route path="/song/:id" element={<SongPage />} /> */}
         {/* <Route path="*" element={<NotFound />} /> */}
 

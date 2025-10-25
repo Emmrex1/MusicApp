@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import React, {
   createContext,
@@ -9,11 +8,11 @@ import React, {
   type ReactNode,
 } from "react";
 
-
 const server = "http://localhost:7000";
 
 export interface Song {
   _id: string;
+  id: string;
   title: string;
   description: string;
   thumbnail: string;
@@ -41,6 +40,9 @@ export interface SongAlbumContextType {
   prevSong: () => void;
   refreshSongs: () => void;
   refreshAlbums: () => void;
+  albumsongs: Song[];
+  albumsData: Album | null;
+  fetchAlbumSongs: (id: string) => Promise<void>;
 }
 
 const SongAlbumContext = createContext<SongAlbumContextType | undefined>(
@@ -54,8 +56,10 @@ interface Props {
 export const SongAlbumProvider: React.FC<Props> = ({ children }) => {
   const [songs, setSongs] = useState<Song[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
+  const [albumsongs, setAlbumsongs] = useState<Song[]>([]);
+  const [albumsData, setAlbumsData] = useState<Album | null>(null);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [index, setIndex] = useState<number>(0);
@@ -65,7 +69,12 @@ export const SongAlbumProvider: React.FC<Props> = ({ children }) => {
     try {
       setLoading(true);
       const { data } = await axios.get(`${server}/api/v1/song/all`);
-      setSongs(data.songs || []);
+      const normalizedSongs: Song[] = (data.songs || []).map((song: any) => ({
+        ...song,
+        id: song._id ?? song.id,
+        _id: song._id ?? song.id,
+      }));
+      setSongs(normalizedSongs);
     } catch (err: any) {
       setError(err.message || "Error fetching songs");
     } finally {
@@ -86,9 +95,25 @@ export const SongAlbumProvider: React.FC<Props> = ({ children }) => {
     }
   }, []);
 
+  // Fetch songs for a specific album
+  const fetchAlbumSongs = useCallback(async (id: string) => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get<{ songs: Song[]; album: Album }>(
+        `${server}/api/v1/song/album/${id}`
+      );
+      setAlbumsData(data.album);
+      setAlbumsongs(data.songs || []);
+    } catch (err: any) {
+      setError(err.message || "Error fetching album songs");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Play specific song
   const playSong = (id: string) => {
-    const song = songs.find((s) => s._id === id);
+    const song = songs.find((s) => s.id === id);
     if (song) {
       setSelectedSong(song);
       setIsPlaying(true);
@@ -99,9 +124,9 @@ export const SongAlbumProvider: React.FC<Props> = ({ children }) => {
   // Toggle play/pause
   const togglePlay = () => setIsPlaying((prev) => !prev);
 
-  // Next/Previous song
+  // Next/Previous
   const nextSong = () => {
-    if (songs.length === 0) return;
+    if (!songs.length) return;
     const nextIndex = (index + 1) % songs.length;
     setIndex(nextIndex);
     setSelectedSong(songs[nextIndex]);
@@ -109,13 +134,14 @@ export const SongAlbumProvider: React.FC<Props> = ({ children }) => {
   };
 
   const prevSong = () => {
-    if (songs.length === 0) return;
+    if (!songs.length) return;
     const prevIndex = index === 0 ? songs.length - 1 : index - 1;
     setIndex(prevIndex);
     setSelectedSong(songs[prevIndex]);
     setIsPlaying(true);
   };
 
+  // Auto-fetch global data once
   useEffect(() => {
     fetchSongs();
     fetchAlbums();
@@ -136,6 +162,9 @@ export const SongAlbumProvider: React.FC<Props> = ({ children }) => {
         prevSong,
         refreshSongs: fetchSongs,
         refreshAlbums: fetchAlbums,
+        albumsongs,
+        albumsData,
+        fetchAlbumSongs,
       }}
     >
       {children}

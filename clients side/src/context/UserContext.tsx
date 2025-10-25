@@ -1,3 +1,4 @@
+
 import axios from "axios";
 import { createContext, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,9 +17,20 @@ interface UserContextType {
   user: User | null;
   isAuth: boolean;
   loading: boolean;
-  loginUser: (email: string, password: string, remember: boolean, navigate: (path: string) => void) => Promise<void>;
-  registerUser: (name: string, email: string, password: string, navigate: (path: string) => void) => Promise<void>;
+  loginUser: (
+    email: string,
+    password: string,
+    remember: boolean,
+    navigate: (path: string) => void
+  ) => Promise<void>;
+  registerUser: (
+    name: string,
+    email: string,
+    password: string,
+    navigate: (path: string) => void
+  ) => Promise<void>;
   logout: () => void;
+  addToPlaylist: (id: string) => Promise<void>;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -32,43 +44,71 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
 
-  //  LOGIN FUNCTION
-const loginUser = async (
-  email: string,
-  password: string,
-  remember: boolean,
-  navigate: (path: string) => void
-) => {
-  try {
-    const { data } = await axios.post(`${server}/api/v1/users/login`, {
-      email,
-      password,
-    });
-
-    if (data?.token) {
-    
-      if (remember) {
-        localStorage.setItem("token", data.token);
-      } else {
-        sessionStorage.setItem("token", data.token);
+  // ✅ Fetch logged-in user data
+  const fetchUserData = async () => {
+    try {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
       }
 
-      toast.success("Login successful!");
+      const { data } = await axios.get(`${server}/api/v1/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setUser(data.user);
       setIsAuth(true);
-
-      await fetchUserData();
-
-      setTimeout(() => navigate("/"), 2000);
-    } else {
-      toast.error("Invalid server response. Please try again.");
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      setIsAuth(false);
+    } finally {
+      setLoading(false);
     }
-  } catch (error: any) {
-    console.error("Login failed:", error);
-    toast.error(error.response?.data?.message || "Invalid credentials. Try again.");
-  }
-};
+  };
 
-//  REGISTER FUNCTION
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  // ✅ Login function
+  const loginUser = async (
+    email: string,
+    password: string,
+    remember: boolean,
+    navigate: (path: string) => void
+  ) => {
+    try {
+      const { data } = await axios.post(`${server}/api/v1/users/login`, {
+        email,
+        password,
+      });
+
+      if (data?.token) {
+        if (remember) {
+          localStorage.setItem("token", data.token);
+        } else {
+          sessionStorage.setItem("token", data.token);
+        }
+
+        toast.success("Login successful!");
+        setIsAuth(true);
+
+        await fetchUserData();
+        setTimeout(() => navigate("/"), 1500);
+      } else {
+        toast.error("Invalid server response. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("Login failed:", error);
+      toast.error(
+        error.response?.data?.message || "Invalid credentials. Try again."
+      );
+    }
+  };
+
+  // ✅ Register function
   const registerUser = async (
     name: string,
     email: string,
@@ -84,62 +124,79 @@ const loginUser = async (
 
       if (data?.token) {
         localStorage.setItem("token", data.token);
-        toast.success("Registration successful! Welcome aboard 🎉");
+        toast.success("Registration successful! 🎉");
         setIsAuth(true);
 
         await fetchUserData();
-        setTimeout(() => navigate("/login"), 2000);
+        setTimeout(() => navigate("/login"), 1500);
       } else {
         toast.error("Registration failed. Please try again.");
       }
     } catch (error: any) {
       console.error("Registration failed:", error);
-      toast.error(error.response?.data?.message || "Something went wrong. Try again.");
+      toast.error(
+        error.response?.data?.message || "Something went wrong. Try again."
+      );
     }
   };
 
-  //  LOGOUT FUNCTION
+  // ✅ Logout function
   const logout = () => {
     localStorage.removeItem("token");
+    sessionStorage.removeItem("token");
     setUser(null);
     setIsAuth(false);
-     toast.success("Logged out successfully.")
+    toast.success("Logged out successfully.");
   };
 
-  //  FETCH USER
-  const fetchUserData = async () => {
+  // ✅ Add to playlist
+  const addToPlaylist = async (id: string) => {
   try {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (!token) {
-      setLoading(false);
+      toast.error("Please login to add songs to your playlist.");
       return;
     }
 
-    const { data } = await axios.get(`${server}/api/v1/users/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const { data } = await axios.post(
+      `${server}/api/v1/users/playlist/${id}`, 
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
-    setUser(data.user);
-    setIsAuth(true);
-  } catch (error) {
-    console.error("Error fetching user:", error);
-    setIsAuth(false);
-  } finally {
-    setLoading(false);
+    toast.success(data?.message || "Song added to your playlist! 🎶");
+    await fetchUserData();
+  } catch (error: any) {
+    console.error("Add to playlist failed:", error);
+    toast.error(
+      error.response?.data?.message ||
+        "Could not add to playlist. Please try again."
+    );
   }
 };
 
-  useEffect(() => {
-    fetchUserData();
-  }, []);
+
 
   return (
-    <UserContext.Provider value={{ user, isAuth, loading, loginUser, registerUser, logout }}>
+    <UserContext.Provider
+      value={{
+        user,
+        isAuth,
+        loading,
+        loginUser,
+        registerUser,
+        addToPlaylist,
+        logout,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );
 };
 
+// ✅ Custom hook
 export const useUserData = (): UserContextType => {
   const context = useContext(UserContext);
   if (!context) {

@@ -54,7 +54,7 @@ const LoginForm = () => {
           <img src="/spotify logo.png" alt="Spotify" className="w-12 h-12" />
         </div>
 
-        <h2 className="text-2xl font-semibold mb-6 text-center">Log in to Spotify</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-center">Log in to emmrex Spotify</h2>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">

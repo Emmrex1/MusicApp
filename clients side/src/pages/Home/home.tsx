@@ -47,18 +47,19 @@ const Home: React.FC = () => {
               </h1>
               <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-gray-700">
                 {songs.length > 0 ? (
-                  songs.map((song) => (
-                    <SongCard
-                      key={song._id}
-                      image={song.thumbnail}
-                      name={song.title}
-                      desc={song.description}
-                      id={song._id}
-                    />
-                  ))
-                ) : (
-                  <p className="text-gray-400">No songs available.</p>
+           songs.map((song) => (
+            <SongCard
+              key={song._id || song.id}
+              image={song.thumbnail}
+              name={song.title}
+              desc={song.description}
+              id={song._id || song.id || ""}
+             />
+           ))
+            ) : (
+               <p className="text-gray-400">No songs available.</p>
                 )}
+
               </div>
             </section>
           </>
