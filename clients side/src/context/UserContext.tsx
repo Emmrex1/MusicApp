@@ -11,6 +11,7 @@ export interface User {
   email: string;
   role: string;
   playlist: string[];
+  favorites?: string[];
 }
 
 interface UserContextType {
@@ -31,6 +32,9 @@ interface UserContextType {
   ) => Promise<void>;
   logout: () => void;
   addToPlaylist: (id: string) => Promise<void>;
+  favoriteSongs: string[];
+  toggleFavorite: (id: string) => Promise<void>;
+  isFavorite: (id: string) => boolean;
 }
 
 export const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -43,8 +47,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuth, setIsAuth] = useState(false);
+  const [favoriteSongs, setFavoriteSongs] = useState<string[]>([]);
 
-  // ✅ Fetch logged-in user data
+  // Fetch logged-in user data
   const fetchUserData = async () => {
     try {
       const token =
@@ -60,6 +65,15 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
 
       setUser(data.user);
       setIsAuth(true);
+      
+      if (data.user.favorites) {
+        setFavoriteSongs(data.user.favorites);
+      } else {
+        const storedFavorites = localStorage.getItem('favoriteSongs');
+        if (storedFavorites) {
+          setFavoriteSongs(JSON.parse(storedFavorites));
+        }
+      }
     } catch (error) {
       console.error("Error fetching user:", error);
       setIsAuth(false);
@@ -72,7 +86,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     fetchUserData();
   }, []);
 
-  // ✅ Login function
+  // Login function
   const loginUser = async (
     email: string,
     password: string,
@@ -108,7 +122,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  // ✅ Register function
+  // Register function
   const registerUser = async (
     name: string,
     email: string,
@@ -140,44 +154,103 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
     }
   };
 
-  // ✅ Logout function
+  // Logout function
   const logout = () => {
     localStorage.removeItem("token");
     sessionStorage.removeItem("token");
     setUser(null);
     setIsAuth(false);
+    setFavoriteSongs([]);
     toast.success("Logged out successfully.");
   };
 
-  // ✅ Add to playlist
+  // Add to playlist
   const addToPlaylist = async (id: string) => {
-  try {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) {
-      toast.error("Please login to add songs to your playlist.");
-      return;
-    }
-
-    const { data } = await axios.post(
-      `${server}/api/v1/users/playlist/${id}`, 
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login to add songs to your playlist.");
+        return;
       }
-    );
 
-    toast.success(data?.message || "Song added to your playlist! 🎶");
-    await fetchUserData();
-  } catch (error: any) {
-    console.error("Add to playlist failed:", error);
-    toast.error(
-      error.response?.data?.message ||
-        "Could not add to playlist. Please try again."
-    );
-  }
-};
+      const { data } = await axios.post(
+        `${server}/api/v1/users/playlist/${id}`, 
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
+      toast.success(data?.message || "Song added to your playlist! 🎶");
+      await fetchUserData();
+    } catch (error: any) {
+      console.error("Add to playlist failed:", error);
+      toast.error(
+        error.response?.data?.message ||
+          "Could not add to playlist. Please try again."
+      );
+    }
+  };
 
+  const toggleFavorite = async (id: string) => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        toast.error("Please login to favorite songs.");
+        return;
+      }
+
+      if (!id) {
+        toast.error("Invalid song ID.");
+        return;
+      }
+
+      const isCurrentlyFavorite = favoriteSongs.includes(id);
+      
+      if (isCurrentlyFavorite) {
+        setFavoriteSongs(prev => prev.filter(songId => songId !== id));
+        
+        try {
+          await axios.delete(`${server}/api/v1/users/favorites/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+        } catch (error) {
+          console.log("Backend favorites endpoint not available, using frontend only");
+        }
+        
+        const updatedFavorites = favoriteSongs.filter(songId => songId !== id);
+        localStorage.setItem('favoriteSongs', JSON.stringify(updatedFavorites));
+        
+        toast.success("Removed from favorites");
+      } else {
+        setFavoriteSongs(prev => [...prev, id]);
+        
+        try {
+          await axios.post(
+            `${server}/api/v1/users/favorites/${id}`, 
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+        } catch (error) {
+          console.log("Backend favorites endpoint not available, using frontend only");
+        }
+        
+        const updatedFavorites = [...favoriteSongs, id];
+        localStorage.setItem('favoriteSongs', JSON.stringify(updatedFavorites));
+        
+        toast.success("Added to favorites! ❤️");
+      }
+    } catch (error: any) {
+      console.error("Toggle favorite failed:", error);
+      toast.error("Failed to update favorites. Please try again.");
+    }
+  };
+
+  const isFavorite = (id: string): boolean => {
+    return favoriteSongs.includes(id);
+  };
 
   return (
     <UserContext.Provider
@@ -189,6 +262,9 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
         registerUser,
         addToPlaylist,
         logout,
+        favoriteSongs,
+        toggleFavorite,
+        isFavorite,
       }}
     >
       {children}
@@ -196,7 +272,7 @@ export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
   );
 };
 
-// ✅ Custom hook
+// Custom hook
 export const useUserData = (): UserContextType => {
   const context = useContext(UserContext);
   if (!context) {

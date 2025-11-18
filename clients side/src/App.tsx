@@ -5,9 +5,7 @@ import LoginForm from "./pages/Auth/Login";
 import RegisterForm from "./pages/Auth/Register";
 import { useUserData } from "./context/Usercontext";
 import Profile from "./pages/Profile/Profile";
-import Album from "./pages/Album/album";
-
-
+import Album from "./pages/Album/Album";
 
 function App() {
   const { loading } = useUserData();
@@ -36,15 +34,10 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Home />} />
-
         <Route path="/login" element={<LoginForm />} />
-         <Route path="/register" element={<RegisterForm/>} /> 
-         <Route path="/profile" element={<Profile />} />
-         <Route path="/album/:id" element={<Album />} />
-        {/* <Route path="/song/:id" element={<SongPage />} /> */}
-        {/* <Route path="*" element={<NotFound />} /> */}
-
-
+        <Route path="/register" element={<RegisterForm />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/album/:id" element={<Album />} />
       </Routes>
     </Router>
   );
