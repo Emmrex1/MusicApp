@@ -6,6 +6,8 @@ import RegisterForm from "./pages/Auth/Register";
 import { useUserData } from "./context/Usercontext";
 import Profile from "./pages/Profile/Profile";
 import Album from "./pages/Album/Album";
+import Admin from "./pages/Admin/Admin";
+import Notifications from "./components/Notification";
 
 function App() {
   const { loading } = useUserData();
@@ -29,6 +31,7 @@ function App() {
       </div>
     );
   }
+  
 
   return (
     <Router>
@@ -38,6 +41,8 @@ function App() {
         <Route path="/register" element={<RegisterForm />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/album/:id" element={<Album />} />
+         <Route path="/admin/dashboard" element={<Admin />} />
+          <Route path="/notifications" element={<Notifications/>} />
       </Routes>
     </Router>
   );
